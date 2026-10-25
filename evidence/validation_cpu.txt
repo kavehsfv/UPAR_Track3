@@ -1,0 +1,22 @@
+Original archive inference payload: BYTE-IDENTICAL
+[submission] ProbPose fine-tuned ViTPose ready on cpu (192x256 input)
+{
+  "torch": "2.4.1+cpu",
+  "device": "cpu",
+  "checksums": "passed",
+  "contract": [
+    {
+      "boxes": 0,
+      "success": true
+    },
+    {
+      "boxes": 1,
+      "success": true
+    },
+    {
+      "boxes": 9,
+      "success": true
+    }
+  ],
+  "degenerate_box": "passed"
+}

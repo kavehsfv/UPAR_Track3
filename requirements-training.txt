@@ -1,0 +1,6 @@
+# Install torch==2.14.0 separately with the correct CUDA wheel for your hardware.
+transformers==5.18.0
+numpy==2.3.5
+Pillow==12.3.0
+safetensors==0.8.0
+huggingface-hub==1.33.0

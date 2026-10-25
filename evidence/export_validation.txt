@@ -1,0 +1,19 @@
+[*] loading ViTPose+ small base ...
+/home/kaveh/Workspace/Programs/conda-envs/pt/lib/python3.11/site-packages/torch/jit/_trace.py:1006: FutureWarning: `torch.jit.trace` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/kaveh/Workspace/Programs/conda-envs/pt/lib/python3.11/site-packages/torch/jit/_trace.py:1145: FutureWarning: `torch.jit.trace_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+[transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+/home/kaveh/Workspace/Programs/conda-envs/pt/lib/python3.11/site-packages/transformers/models/vitpose_backbone/modeling_vitpose_backbone.py:65: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if height != self.image_size[0] or width != self.image_size[1]:
+/home/kaveh/Workspace/Programs/conda-envs/pt/lib/python3.11/site-packages/transformers/integrations/sdpa_attention.py:124: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  is_causal = q_length > 1 and attention_mask is None and is_causal
+/home/kaveh/Workspace/Programs/conda-envs/pt/lib/python3.11/site-packages/torch/jit/_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.
+  warnings.warn(
+[*] loaded ckpt: missing=0 unexpected=0
+[*] sanity: heatmaps (1, 17, 64, 48) probs (1, 17); batch4 ok=(4, 17, 64, 48)
+    heatmap sum/channel (should be 1.0): tensor([1.0000, 1.0000, 1.0000])
+    probs range: [0.4869, 0.9736]
+[*] saved /tmp/upar_t3_export_verify/mipnet_ft.torchscript (133 MB)
+[*] wrote /tmp/upar_t3_export_verify/preprocess_mip.json
+[*] reload check: max|diff_hm| = 0.00e+00, max|diff_pr| = 0.00e+00

@@ -1,0 +1,6 @@
+.git
+data
+training/runs
+submission_zip
+__pycache__
+*.log

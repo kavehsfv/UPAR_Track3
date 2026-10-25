@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+data/
+training/runs/
+submission_zip/
+*.log

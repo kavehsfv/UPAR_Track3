@@ -1,0 +1,26 @@
+{
+  "original_archive_md5": "2de661186c5954f38c8f2bd6cdd4fb96",
+  "inference_files": [
+    "run.py",
+    "metadata.yaml",
+    "requirements.txt",
+    "assets/mean_pose.json",
+    "assets/preprocess_mip.json",
+    "assets/mipnet_ft.torchscript"
+  ],
+  "sha256": {
+    "run.py": "989942f54762724f6f82944515ad150245e0acf59279da39091aca8952eb34c2",
+    "metadata.yaml": "6bf44083a3ab99e68efa2f4151cfec26d0a87876213011bc22061a031d24df23",
+    "requirements.txt": "5ded86d776821fc4d548d497d2778f9c07cbebe48bd704b8901ace7501cdd8c6",
+    "assets/mean_pose.json": "cd02a248a8e88a39daf3387d41c461a3d48b4e7b3e415b9102e71059ce330695",
+    "assets/preprocess_mip.json": "5e6975799cc815da30ec869f9ecdc4edf68a92efe1270e1ddcba187abebd81ad",
+    "assets/mipnet_ft.torchscript": "8cdd9f676c0f7b5b57d8c3ee66fc55e42cf42c229e9b490f6c089eb16efd8494",
+    "weights/pose_model.pt": "00fe13e15e70ccd79824cf068c6c00c97e6733dc406a21aed4d9241525a3dbd5"
+  },
+  "source_branch": "paper/mipnet3",
+  "source_commit": "f38e07e",
+  "training_source_commit": "005e07e",
+  "training_recipe": "mipnet_v2",
+  "best_epoch_zero_based": 13,
+  "score_archive_mapping": "Participant confirms the best/final method was uploaded; official leaderboard CSV corresponds to the final entry. Local inference, export parity and payload compatibility verified; no fresh hidden-server rerun."
+}

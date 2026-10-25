@@ -1,0 +1,9 @@
+# Training/export stack, kept separate from the older inference runtime.
+FROM python:3.11-slim
+WORKDIR /workspace
+RUN python -m pip install --no-cache-dir torch==2.14.0 --index-url https://download.pytorch.org/whl/cu130
+COPY requirements-training.txt .
+RUN python -m pip install --no-cache-dir -r requirements-training.txt
+COPY . /workspace
+ENV UPAR_DATA=/data OMP_NUM_THREADS=4 MKL_NUM_THREADS=4
+CMD ["python", "training/train_pose.py", "--out-dir", "training/runs/final_pose"]

@@ -1,0 +1,2 @@
+assets/*.torchscript filter=lfs diff=lfs merge=lfs -text
+weights/*.pt filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,5 @@
+torch 2.4.1+cpu
+batch 1 max_output_diffs [0.0, 0.0]
+batch 6 max_output_diffs [0.0, 0.0]
+batch 12 max_output_diffs [0.0, 0.0]
+PASS: released training checkpoint reproduces deployment tensor outputs
