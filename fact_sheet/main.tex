@@ -1,0 +1,166 @@
+\documentclass[a4paper,10pt,conference]{ieeeconf}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=black}
+\urlstyle{same}
+% Organizer header retained.
+\title{WACV 2027 UPAR Challenge\\ \textit{Fact sheet}}
+\begin{document}
+\maketitle
+This is the fact sheet's template for the \href{https://vap.aau.dk/rws/challenge/}{WACV 2027 UPAR Challenge}. Please fill out the following sections carefully in a scientific writing style. Then, send the compressed project (in \texttt{.zip} format), i.e., the generated PDF, \texttt{.tex}, \texttt{.bib} and any additional files to \url{upar.challenge@gmail.com}.
+
+\section{Team details}\label{teamdetails}
+\begin{itemize}
+\item Team leader name: Kaveh Safavigerdini.
+\item Username(s) on Codabench: \\ \texttt{kavehsfv-994308-994308\_VID-Docker-GPU}.
+\item Team leader affiliation: Electrical Engineering and Computer Science Department, University of Missouri--Columbia, USA.
+\item Team leader email: \url{ksgh2@umsystem.edu}.
+\item Name of other team members (and affiliation): None.
+\item Team website URL (if any): \url{https://github.com/kavehsfv}.
+\item Competition track (mark with X one single option)\footnote{If you participated in more than one competition track, you need to share with the organizers one fact sheet per track.}:
+\begin{itemize}
+\item ( ) Track 1: Pedestrian Attribute Recognition.
+\item ( ) Track 2: Attribute-based Person Retrieval.
+\item (X) Track 3: Human Pose Estimation.
+\end{itemize}
+\end{itemize}
+
+\section{Contribution details}
+\subsection{Title of the contribution}
+\textbf{Expected-OKS pose decoding with ViTPose+ Small, reduced-dose box jitter and multi-scale flip inference.}
+The final entry (\texttt{mipnet\_v3}) fine-tunes a pretrained top-down pose estimator with probabilistic heatmaps, then combines three crop scales. It uses a single set of model weights. The name denotes our experiment identifier; it is not the original multi-instance MIPNet architecture. This fact sheet describes only the submitted final method.
+
+\subsection{Representative image / workflow diagram of the method}
+\begin{figure}[ht]
+\centering
+\setlength{\fboxsep}{5pt}
+\fbox{\begin{minipage}{0.91\columnwidth}\centering
+Image + organizer-provided person box\\
+$\downarrow$\\
+Aspect correction + padding $1.25$\\
+Three crop scales $\{0.9,1.0,1.1\}$\\
+RGB $256\!\times\!192$ + horizontal flips\\
+$\downarrow$\\
+Shared ViTPose+ Small (COCO route 0)\\
+PT18 remap/refine $\rightarrow$ Sparsemax heatmaps\\
+Detached branch $\rightarrow$ in-crop presence\\
+$\downarrow$\\
+Undo flips; average paired heatmaps\\
+OKS-kernel convolution + Taylor refinement\\
+$\downarrow$\\
+Map each scale to image coordinates\\
+Average coordinates, confidence and presence\\
+17 $(x,y,v)$ joints + one score per box
+\end{minipage}}
+\caption{Final inference pipeline. Six views are stacked into one model call per box chunk; the three coordinate estimates are fused only after mapping to image space.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Detailed method description}
+\paragraph{Model and representation.}
+We use the starter's public \texttt{usyd-community/vitpose-plus-small} checkpoint~\cite{startermodel}, based on ViTPose~\cite{xu2022vitpose}. Expert index 0 is supplied for every crop. The pretrained decoder produces 17 heatmaps at $64\!\times\!48$. A learned $1\!\times\!1$ channel projection, residual depthwise $3\!\times\!3$ refinement and final $1\!\times\!1$ projection adapt COCO channels to the 17 PoseTrack18 output slots. An additional $1\!\times\!1$ refinement followed by spatial Sparsemax with temperature $0.5$ yields nonnegative unit-mass maps $P_k$. The remapping is initialized from anatomical COCO-to-PT18 correspondences, with head landmarks initialized using available face/shoulder proxies.
+
+Following adapted ProbPose mechanisms~\cite{purkrabek2025probpose}, a separate branch predicts in-crop presence $r_k$. Its input heatmap features are detached, so its BCE gradient does not change the localization pathway. Three $3\!\times\!3$ convolution/BN/pooling/ReLU stages, a $1\!\times\!1$ convolution, sigmoid and spatial averaging produce 17 presence values. Presence is not a calibrated localization-error estimate.
+
+\paragraph{Preprocessing and data.}
+Boxes are supplied by the organizer; no detector is trained or run. Each box is adjusted to aspect ratio $192/256$, expanded by $1.25$ and sampled by a bilinear affine warp into an RGB $256\!\times\!192$ crop. Normalization uses mean $(0.485,0.456,0.406)$ and standard deviation $(0.229,0.224,0.225)$.
+
+We fine-tune on the supplied \texttt{train\_upar\_all.json} snapshot containing 42,736 annotations. The included 301-annotation local split is excluded from gradient updates, leaving 42,435 training annotations: 29,613 PA-100K and 12,822 Market. No PETA annotation occurs in this snapshot. No official validation or hidden-test image is added to training. The local holdout selects the checkpoint by crop-space pixel error; it is not an additional training set.
+
+\paragraph{Targets and losses.}
+Let $u_k$ be a labeled joint in heatmap coordinates. We use
+\begin{align}
+ A_h &= \sqrt{(64/1.25)(48/1.25)},\nonumber\\
+ s_k &= \operatorname{clip}\!\left(2(2\sigma_k)^2 A_h,\,0.55,\,3.0\right),\\
+ T_k(p) &= \exp\!\left[-\|p-u_k\|^2/(2s_k)\right].
+\end{align}
+Here $s_k$ is a variance-like denominator parameter, not a standard deviation; $A_h\approx44.3405$ is the fixed crop-derived quantity used in our implementation. In output order the sigmas are
+\begin{equation*}
+\begin{split}
+( & .025,.025,.059,.059,.059,.079,.079,.072,.072,\\
+ & .062,.062,.107,.107,.087,.087,.089,.089).
+\end{split}
+\end{equation*}
+Targets are not normalized to unit mass, whereas predictions are.
+
+With $w_k$ the annotation mask, the localization loss is
+\begin{equation}
+\begin{split}
+ L_{\mathrm{loc}} &= \frac{1}{64\cdot48\sum_k w_k}\sum_{k,p} w_k\bigl\{\\
+ &0.95P_k(p)[1-T_k(p)]+0.05\|\nabla_S P_k(p)\|^2\bigr\}.
+\end{split}
+\end{equation}
+where $\nabla_S$ uses horizontal and vertical Sobel filters. The overall objective is $L=L_{\mathrm{loc}}+0.1L_{\mathrm{BCE}}(r,z)$, with $z_k$ indicating whether the transformed joint lies inside the crop and BCE masked by $w_k$. Unlabeled joints contribute neither loss. This is an adapted probabilistic heatmap loss, not the complete original ProbPose system.
+
+\paragraph{Augmentation and optimization.}
+With probability $0.25$, the box center is shifted uniformly within $\pm5\%$ of its width/height and each side length is perturbed within $\pm7.5\%$. Source-image keypoints remain unchanged; only the crop window moves. Additional augmentation comprises flip probability $0.5$, Gaussian scale $\mathcal{N}(1,0.1^2)$ clipped to $[0.7,1.3]$, uniform rotation $\pm30^\circ$, brightness/contrast probability $0.5$ (multiplicative $[0.8,1.2]$, additive $[-0.1,0.1]$), and one-sided blackout probability $0.3$.
+
+Training lasts 15 epochs, batch size 64, seed 0, eight loader workers, AdamW weight decay $10^{-4}$ and BF16 autocast. During epochs 0--3 the pretrained network is frozen; the probability/refinement and remapping learning rates are $10^{-3}$ and $5\!\times\!10^{-4}$. At epoch 4 all pretrained parameters are unfrozen at $10^{-5}$, while the other two rates become $10^{-4}$ and $5\!\times\!10^{-5}$. No EMA or cosine schedule is used in the selected recipe. Presence BCE is computed in FP32 outside autocast. The selected checkpoint is epoch 13 (zero-based), with held-out crop-space error $3.452812$ pixels. This selection statistic is not official AP.
+
+The historical training stack is Python 3.11, PyTorch 2.14.0+cu130, Transformers 5.18.0, NumPy 2.3.5 and Pillow 12.3.0. Training configuration, split, curve, checkpoint and offline export script are released. Inference is separately checked under PyTorch 2.4.1 CPU, the challenge-compatible generation.
+
+\paragraph{Inference and output.}
+At each scale, the original and flipped crops use the same weights. Flipped maps are spatially mirrored and left/right channels exchanged, without an additional pixel shift. Paired maps and presence estimates are averaged. Each map is convolved with a normalized Gaussian OKS kernel using the corresponding $s_k$; the maximum of this expected-OKS surface is refined with a second-order Taylor step. The resulting position is mapped from heatmap to crop to original-image coordinates. Coordinates, convolved-peak confidences and presence values are averaged across the three scales; coordinates are clamped to image bounds. The box score is the mean of its 17 averaged convolved peaks. We output $v_k=1$ for averaged presence $\geq0.5$, otherwise 0. Ear slots remain present although the challenge excludes them from scoring.
+
+Up to eight boxes (48 views) are stacked per network call. Inference requires only PyTorch, NumPy and Pillow and performs no downloads. Degenerate boxes use an included training-pose prior. Multi-scale fusion takes place in image coordinates, not heatmap coordinates: an identical heatmap displacement represents a different image displacement at different crop scales.
+
+\subsection{Challenge results}
+\begin{table}[ht]
+\centering
+\caption{Official organizer leaderboard export, test set (36,509). Values are on the supplied $[0,1]$ scale.}
+\begin{tabular}{lr}\hline
+Metric & Final submission\\\hline
+AP (mean) & \textbf{0.8862830000}\\
+AP50 & 0.9672830000\\
+AP\_medium & 0.8564020000\\
+AP\_large & 0.6790190000\\\hline
+\end{tabular}
+\label{tab:results}
+\end{table}
+The participant confirms that the best/final method was uploaded; Table~\ref{tab:results} reports the official result of that entry. The release preserves its runtime-fixed inference payload. Checkpoint loading, both training stages, offline export parity and the inference contract have been verified locally. These checks are distinct from the organizer's hidden-set accuracy evaluation.
+
+\subsection{Final remarks}
+\textbf{Advantages:} one model, explicit PT18 adaptation, crop-noise training, metric-shaped decoding and self-contained offline inference. The detached presence branch avoids an auxiliary-gradient conflict with localization. \textbf{Limitations:} six test views increase compute; performance remains dependent on supplied boxes; convolved-peak scores are not calibrated error probabilities. Docker recipes are supplied but could not be built on the preparation host, where Docker is unavailable. Starter-checkpoint pretraining provenance requires the clarification below.
+
+\section{Additional method details}
+Please, reply if your challenge entry considered (or not) the following strategies and provide a brief explanation. For each question, mark with X one single option.
+\begin{itemize}
+\item \textbf{For the competition track associated with this fact sheet, you confirm that you have trained your model on the predefined datasets} (X) Yes, ( ) No.\\
+Fine-tuning uses only the supplied training annotations, excluding the released 301-annotation local holdout.
+
+\item \textbf{Did you use any pre-trained model:} (X) Yes, ( ) No.\\
+The starter's \nolinkurl{usyd-community/vitpose-plus-small}, revision \texttt{0c30b6534bb6} (full revision in the release), with expert route 0. Its public model card describes multi-dataset pretraining including COCO, AI Challenger and MPII. Route 0 does not prove COCO-only pretraining, because shared parameters retain supervision from other datasets. The starter's stated COCO/PoseTrack18 restriction therefore needs organizer clarification for its own supplied checkpoint; we do not assert that broader pretraining has been removed.
+
+\item \textbf{Did you use external data?} ( ) Yes, (X) No.\\
+No additional external images or pseudo-labels were introduced during our fine-tuning. Broader upstream pretraining is separately disclosed above; this answer does not assert a COCO-only warm start.
+
+\item \textbf{Did you perform any data augmentation?} (X) Yes, ( ) No.\\
+Reduced-dose box jitter, scale, rotation, flip, color adjustment and one-sided blackout as specified in Section II.
+
+\item \textbf{Did you use the provided validation set as part of your training set?} ( ) Yes, (X) No.\\
+No official validation images enter gradient updates. The local training-data holdout selects the checkpoint only.
+
+\item \textbf{Did you use any regularization strategies/terms?} (X) Yes, ( ) No.\\
+AdamW weight decay $10^{-4}$ and Sobel heatmap smoothing weight $0.05$, in addition to augmentation.
+
+\item \textbf{Did you use any pre-processing steps?} (X) Yes, ( ) No.\\
+Aspect correction, padding, affine RGB resampling and ImageNet normalization.
+
+\item \textbf{Did you use any post-processing steps?} (X) Yes, ( ) No.\\
+Flip and scale fusion, OKS-kernel/Taylor decoding, inverse coordinate mapping and image-bound clamping.
+
+\item \textbf{Did you use Vision Language Models (VLMs) of any kind?} ( ) Yes, (X) No.\\
+The pipeline is vision-only; no language encoder or text supervision is used in our method.
+\end{itemize}
+
+\section{Code repository}
+\textbf{Code repository:} \url{https://github.com/kavehsfv/UPAR_Track3}.\\
+Inference and training code, exact configuration, split and trained state dictionary are supplied. Git LFS hosts both the training checkpoint and ready-to-run TorchScript weights. A separate weight ZIP and the compressed fact-sheet project are available at \url{https://github.com/kavehsfv/UPAR_Track3/releases/tag/v1.0}. The README gives pinned dependencies, training/export commands, offline inference validation and inference/training Dockerfiles. Deployment-payload checksums and local verification logs are included. Dataset images are not redistributed.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

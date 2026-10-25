@@ -1,0 +1,55 @@
+To: upar.challenge@gmail.com
+Subject: UPAR Challenge 2027 Track 3 — final fact sheet, code and trained weights — kavehsfv-994308-994308_VID-Docker-GPU
+
+Dear UPAR Challenge organizers,
+
+Please find attached the fact sheet PDF and compressed LaTeX project for my final
+Track 3 Human Pose Estimation submission.
+
+Participant: Kaveh Safavigerdini
+Affiliation: Electrical Engineering and Computer Science Department,
+University of Missouri–Columbia, USA
+Codabench username: kavehsfv-994308-994308_VID-Docker-GPU
+
+The final method combines a fine-tuned ViTPose+ Small model, probabilistic
+expected-OKS decoding, reduced-dose box jitter and three-scale flip inference.
+The official leaderboard export for my final entry reports:
+  AP (mean): 0.8862830000
+  AP50:      0.9672830000
+  AP_medium: 0.8564020000
+  AP_large:  0.6790190000
+
+Public code repository (inference AND training):
+https://github.com/kavehsfv/UPAR_Track3
+
+Trained weights are available through Git LFS in that repository, with an
+alternative downloadable ZIP at:
+https://github.com/kavehsfv/UPAR_Track3/releases/tag/v1.0
+
+The repository includes the selected training checkpoint, ready-to-run
+TorchScript model, exact split/configuration, training and offline export
+instructions, inference and training Dockerfiles, and verification evidence.
+The inference payload is byte-identical to the final runtime-fixed submission.
+Local checks passed under PyTorch 2.4.1 CPU, including multi-box/chunked output,
+strict checkpoint loading, both training stages and offline export parity.
+Docker build/run was not tested on the preparation host, where Docker is
+unavailable; the native Python compatibility checks are documented.
+
+One checkpoint-provenance clarification is disclosed in the fact sheet and
+README: I used the same public usyd-community/vitpose-plus-small checkpoint as
+the organizer starter, routing expert 0. Its model card describes multi-dataset
+pretraining beyond COCO/PoseTrack18; routing expert 0 does not remove supervision
+in shared parameters. Please confirm eligibility of this starter checkpoint
+under the stated pretraining restriction. No additional external images or
+pseudo-labels were introduced in my fine-tuning.
+
+Attachments:
+1. Track3_fact_sheet.pdf
+2. Track3_fact_sheet.zip (PDF, LaTeX, bibliography and class/style dependencies)
+3. Track3_source.zip (lightweight code bundle; weights downloadable separately)
+
+Thank you for organizing the challenge.
+
+Best regards,
+Kaveh Safavigerdini
+ksgh2@umsystem.edu

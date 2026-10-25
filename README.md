@@ -201,6 +201,20 @@ this repository URL and the Git LFS/release weight links, by **October 26, 2026
 AoE (UTC-12)**, i.e. **October 27, 2026 12:00 UTC**. The email draft is in
 `ORGANIZER_EMAIL.txt`. The source project ZIP is attached to the GitHub release.
 
+```bash
+# Rebuild the three handoff archives after compiling fact_sheet/main.tex:
+python build_handoff.py
+# Produces handoff/Track3_{source,weights,fact_sheet}.zip
+```
+
+Local verification evidence and its scope are summarized in
+[`evidence/VERIFICATION.md`](evidence/VERIFICATION.md). For an optional offline
+training/checkpoint backward smoke test in the training environment, run:
+
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python training/smoke_test.py
+```
+
 ## 8. Attribution and licensing
 
 See `THIRD_PARTY_NOTICES.md` and `licenses/` for starter-kit and adapted ProbPose
